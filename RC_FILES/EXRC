@@ -1,0 +1,44 @@
+
+filetype plugin off
+filetype plugin indent on
+
+" align columns
+set autoindent 
+
+" tabs map to 4 spaces except for makefiles
+set softtabstop=4
+" autocmd FileType make set noexpandtab
+set shiftwidth=4
+" set tabstop=4
+set expandtab
+
+" turn on line numbers BUT NOT hiliting
+set nu 
+hi LineNr term=NONE
+
+" cannot remember what this does :-)
+set report=1 
+
+" minimize line number hilighting
+highlight LineNr ctermfg=Grey ctermbg=NONE guifg=Grey guibg=NONE
+
+" forgot this one too......
+set bs=2
+
+" make sure del generates ascii 127 and backspace ^h
+:map!  
+
+" turn off autocommenting
+" setlocal formatoptions-=cro
+
+" turn off auto bracket hiliting, EXTREMELY ANNOYING
+let g:loaded_matchparen = 1
+
+" turn OFF ALL colors
+syntax off
+set nohlsearch
+set t_Co=0
+
+
+
+

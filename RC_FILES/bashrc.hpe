@@ -1,0 +1,222 @@
+
+##################################################################
+#		       HP
+##################################################################
+
+###export REVIEWUSER=$MY_USERNAME
+###export http_proxy="http://web-proxy.rose.hpecorp.net:8080"
+###export https_proxy="https://web-proxy.rose.hp.com:8080"
+###
+#### git config --global user.email cihangir.m.akyol@hpe.com
+#### git config --global user.name 'Cihangir Akyol'
+#### git config --global user.username $MY_GITHUB_USERNAME
+#### git config --global --add gitreview.username $MY_GITHUB_USERNAME
+#### git config --global http."https://review-nos.rose.rdlabs.hpecorp.net".sslVerify false
+#### git config --global http."https://git-nos.rose.rdlabs.hpecorp.net".sslVerify false
+###
+#### make sure git diff does NOT chop lines at the end 
+###git config --global core.pager 'less -r'
+###
+###alias monaco='xterm -fa monaco -fs 10'
+###
+###export REPOSITORIES_BASE_DIRECTORY=/ws/$MY_USERNAME
+###alias repos='cd $REPOSITORIES_BASE_DIRECTORY; ls -l'
+###
+####
+#### useful email aliases:
+#### hpn-staff-daftary
+#### hpn-group-daftary
+#### hpn-mgrs-daftary
+####
+###
+####
+#### running quagga in docker independently
+####
+###alias rquagga='sudo docker run -t -d --name=private_quagga --privileged halon/quagga'
+###alias rqbash='sudo docker exec -ti private_quagga bash'
+###
+####
+#### build cscope database
+####
+###function bcsp
+###{
+###    rm -rf cscope*
+###    echo -n "Finding files .. "
+###    find -L $1 \
+###        -type d \( -name bcmsdk \) -prune -o \
+###        \( -name '*.h' -o -name '*.c' -o \
+###           -name '*.yaml' -o -name '*.extschema' -o \
+###           -name '*akefile*' \) -print > cscope.files
+###    echo Done
+###    echo -n "Building cscope database .. "
+###    cscope -b -q -k
+###    echo Done
+###    echo -n "Building ctags database .. "
+###    ctags `cat cscope.files`
+###    echo "Done"
+###}
+###
+###export ACTON_IP_ADDR='16.108.137.103'
+###export PGM_TFTP_SERVER='120.93.49.9'
+###alias bashrc='vi $home/.bashrc'
+###alias tips='vi $home/.tips'
+###alias my_commits='git log --author="akyolc"'
+###alias init_modules='make devenv_init'
+###alias initm=init_modules
+###alias init_tests='make devenv_ct_init'
+###alias initt=init_tests
+###alias run_all_tests='make devenv_ct_test'
+###alias list_modules='make devenv_list_all'
+###alias listm='list_modules'
+###alias dnld_halon='scp $CURRENT_REPO_DIRECTORY/images/onie-installer-x86_64-as5712_54x root@${ACTON_IP_ADDR}:/tmp'
+###alias onie='echo "onie-nos-install tftp://120.93.49.9/akyolc.onie"'
+###
+###export SSTATE_DIR=/ws/$MY_USERNAME/openswitch-cache/sstate
+###export DL_DIR=/ws/$MY_USERNAME/openswitch-cache/downloads
+###
+###function halon_clone
+###{
+###    git clone https://git-nos.rose.rdlabs.hpecorp.net/hpe/hpe-build $1
+###    # make configure ( genericx86-64 | as5712 )
+###}
+###
+###function openswitch_clone
+###{
+###    git clone https://git.openswitch.net/openswitch/ops-build $1
+###    # make configure ( genericx86-64 | as5712 )
+###}
+###
+####
+#### determines which *DIRECTORY* to work in
+####
+###function repo
+###{
+###    if [ -z "$1" ]
+###    then
+###        echo "current git repository is set to: $CURRENT_REPO_DIRECTORY"
+###    else
+###        export CURRENT_REPO_DIRECTORY=$REPOSITORIES_BASE_DIRECTORY/$1
+###        echo "working repository set to $CURRENT_REPO_DIRECTORY"
+###        cd $CURRENT_REPO_DIRECTORY
+###    fi
+###}
+###
+#### configure actos/as5712 switch hardware
+###alias c_acton='make configure as5712'
+###
+#### configure generic x86 halon for simulator
+###alias c_generic='make configure genericx86-64'
+###
+####
+#### the "r" in front of all aliases below denotes "halon"
+####
+###alias rbase='cd $CURRENT_REPO_DIRECTORY'
+###alias rsrc='cd $CURRENT_REPO_DIRECTORY/src'
+###alias ryocto='cd $CURRENT_REPO_DIRECTORY/yocto/halon'
+###alias rcsp='cd $CURRENT_REPO_DIRECTORY/src'
+###alias rovsdb='cd $CURRENT_REPO_DIRECTORY/src/ops-openvswitch/ovsdb'
+###alias rops='cd $CURRENT_REPO_DIRECTORY/src/ops'
+###alias rvswitchd='cd $CURRENT_REPO_DIRECTORY/src/ops-openvswitch/vswitchd'
+###alias rschema='cd $CURRENT_REPO_DIRECTORY/src/ops/schema'
+###alias rswitch=hvswitchd
+###alias rlldp='cd $CURRENT_REPO_DIRECTORY/src/ops-lldpd/src'
+###alias rquagga='cd $CURRENT_REPO_DIRECTORY/src/ops-quagga'
+###alias rbgp='cd $CURRENT_REPO_DIRECTORY/src/ops-quagga/bgpd'
+###alias rcli='cd $CURRENT_REPO_DIRECTORY/src/ops-cli/vtysh'
+###alias rsysd='cd $CURRENT_REPO_DIRECTORY/src/ops-sysd'
+###alias bcm='cd $home/bcm_latest_sdk'
+###alias repo_url='git remote show origin'
+###alias repo_info=repo_url
+###
+#### copy as5712 image to tftp area
+###alias warp='cp $CURRENT_REPO_DIRECTORY/images/onie-installer-x86_64-as5712_54x /warp/pub/akyolc.onie'
+###
+#### download as5712 image to the RTL switch.  This is executed on the switch.
+###alias dl='echo "tftp -r akyolc.onie -g 120.93.49.9"'
+###
+###alias getm='make devenv_add '
+###alias delm='make devenv_rm '
+###
+###function update
+###{
+###    CURRENT=`pwd`
+###    cd $CURRENT_REPO_DIRECTORY; git pull;
+###    #### cd $CURRENT_REPO_DIRECTORY/yocto/halon; git pull
+###    #### cd $CURRENT_REPO_DIRECTORY; make devenv_refresh
+###    for dir in $CURRENT_REPO_DIRECTORY/src/op*
+###    do
+###        if [ -d "$dir" ]; then
+###            echo "updating $dir"
+###            (cd $dir && git pull)
+###        fi
+###    done
+###    cd $CURRENT
+###}
+###
+####
+#### work in a halon git branch.
+#### BE in the repository whose branching is being changed.
+####
+###function branch
+###{
+###    export GIT_BRANCH=$1
+###    if [ "$GIT_BRANCH" == "master" ]
+###    then
+###        git checkout master
+###    else
+###        echo "setting halon git branch to $GIT_BRANCH"
+###        git pull --rebase
+###        git checkout -b feature/$GIT_BRANCH --track origin/feature/$GIT_BRANCH
+###        # git branch -u origin/feature/$GIT_BRANCH
+###    fi
+###}
+###
+####
+#### runs the x86 generic image in docker
+####
+###export DOCKER_NAME=as5712_simulator
+###function sim-clean
+###{
+###    docker kill `docker ps -aq`
+###    docker rmi -f `docker ps -aq`
+###}
+###
+###alias sim-console='docker exec -ti $DOCKER_NAME /bin/bash'
+###alias sim-kill='docker rm -f $DOCKER_NAME'
+###alias sim-delete='docker rmi -f openswitch/genericx86-64'
+###alias sim-make='sim-delete; make export_docker_image'
+###function sim-run
+###{
+###    sim-kill
+###    docker run -d --privileged -v /tmp:/tmp -h $DOCKER_NAME --name=$DOCKER_NAME -ti --net=none openswitch/genericx86-64 /sbin/init
+###}
+###alias simulate=sim-run
+###alias dumptable='ovsdb-client monitor'
+###
+###alias runtest='/usr/bin/sudo ${CURRENT_REPO_DIRECTORY}/build/tmp/sysroots/x86_64-linux/usr/bin/py.test -s '
+###
+####
+#### roseville test bed (Pod Manager)
+#### pmg
+####
+###
+####
+#### C indent/beautifier
+####
+###function ind
+###{
+###    indent -npro -bad -bap -bbb -br -blf -bls -bli0 -cbi0 -cdw -ce -fca -cli0 \
+###        -npcs -i4 -l79  -lc79 -nbfda -nut -saf -sai -saw -sbi4 -sc \
+###        -sob  -ncdb -pi4 -cs -bs -di1 -lp -il0 –hnl -kr \
+###        $1 -o $1.indented
+###}
+###
+####
+#### for some reason, x2go does not work with .Xauthority file present,
+#### and .profile being there. So, remove it at first login.  Restore
+#### .profile afterwards
+####
+#### rm -f ~.Xauthority
+###alias x2go_cleanup='/tools/NX_NoMachine_Repair'
+###
+###

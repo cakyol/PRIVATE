@@ -1,0 +1,450 @@
+
+eng-services@gigamon.com
+helpdesk@gigamon.com
+build-team@gigamon.com
+
+#############################################################################
+#
+Default repo name is 'gvhd'
+
+#############################################################################
+#
+# If cannot push to remore repo, execute:
+git remote set-url origin https://cakyol@github.com/cakyol/generic_utilities.git
+in .git/config, have the line:
+
+    url = https://username:password@github.com/cakyol/generic_utilities.git
+
+CORRECT WAY THAT WORKS:
+    git push https://cakyol@github.com/cakyol/generic_utilities.git [master]
+FIRST TIME add "master" to end of line
+
+
+#############################################################################
+#
+cloning:
+git clone ssh://gakyol@gerrit.gigamon.com:29418/gvhd && \
+    scp -p -P 29418 gakyol@gerrit.gigamon.com:hooks/commit-msg gvhd/.git/hooks/
+
+with references on saturn:
+
+git clone --reference /home/git-reference-repos/gvhd.git \
+ssh://gakyol@gerrit.gigamon.com:29418/gvhd && \
+scp -p -P 29418 gakyol@gerrit.gigamon.com:hooks/commit-msg gvhd/.git/hooks/
+
+#############################################################################
+#
+git code reviewing:
+
+git push origin HEAD:refs/for/sandbox/sb-newgen
+git push origin HEAD:refs/for/master
+
+#############################################################################
+#
+Build an image:
+./gigafalcon.py -p <product-name>   // GVCC2, GVHC2, GVAG, …
+now aliased to 'build'
+-v or --vm-image builds the vm image
+
+image labels:
+HD8: GVCC2
+HC3: GIHC3
+HC2: GVHC2
+HC1: GIHC1
+
+./gigafalcon.py -p --superclean         <----- cleanup
+./gigafalcon.py -p --super-clean        <----- cleanup
+./gigafalcon.py -p PRODUCT -t build     <----- build after a simple mod
+./gigafalcon.py -p PRODUCT -t staging   <----- build after a simple mod
+./gigafalcon.py -p PRODUCT -t image     <----- generate the actual image
+
+#############################################################################
+#
+images end up in directory: 
+fir/tree/falcon_output/<product>/install/image          <-- Linux layout
+fir/tree/falcon_output/<product>/install/release/image  <-- bundled image
+
+#############################################################################
+#
+completely clean out and rebuild a platform
+
+from a KNOWN reference image:
+manufacture.sh -v -a -m gihc3 -u http://10.50.31.1/vim/hc3-el6.img
+
+or another image:
+manufacture.sh -v -a -m gihc3 -u http://saturn.gigamon.com/image.img
+
+#############################################################################
+#
+some useful commands:
+
+_shell      <------ will drop u into Linux shell
+cli         <------ runs the cli
+
+But these work only in a debug build
+In a NON debug normal client build, here is the proces:
+
+1) Enter CLI command “debug shell req”
+2) Enter challenge string on this page: http://rafale.gigamon.com/~eleung/shell_key.php
+3) Enter CLI command “debug shell enter 123”, where 123 is whatever key \
+   string that you get from the page
+
+#############################################################################
+#
+the file where the work of mapping from commands to BCM SDK is:
+		ndd_mgmt.c
+
+#############################################################################
+#
+# Recovering from nique hostid missing
+
+This issue generally come when a file @ “/config/mfg/mfdb” gets deleted.
+Generally it might happen if any one perform “rm –rf /config/*” from a shell.
+This file gets created during the remanufacturing of a box and stays forever 
+as long as the file is intact.
+To recover, 
+1.  “system changehostid reload “ from CLI (on debug image only).
+2.  Else reman the box and you should be able to see the file and a non-zero hostid.
+
+#############################################################################
+#
+
+ *** MUST USE MICROSOFT INTERNET EXPLORER ***
+
+Automated test framework URL: http://10.115.122.250/gigatest/#/Home
+login: gakyol
+pw: 1......$
+
+edit the remanuf file to pick up the correct images.
+
+#############################################################################
+#
+the daily images are at:
+http://gigatftpserver.gigamon.com/tftpboot/HSERIES/master/.........
+
+#############################################################################
+# image loading & rebooting
+
+- config> interface eth0 dhcp
+- image fetch http://gigatftpserver.gigamon.com/tftpboot/HSERIES/
+  		master/22779/ppc/<image.img>
+- image install <image.img> [ no-use-tmpfs ]
+- image boot next
+- reboot
+
+#############################################################################
+
+IXIA chassis: 10.115.1.100
+one available port for us: Slot 7, port 4.
+
+#############################################################################
+
+How to enter BCM shell:
+from ***Linux*** prompt, enter: telnet 0 2395
+
+#############################################################################
+ 
+BCM commands:
+
+N: 		switch to N'th unit (chip)
+show unit	shows chip hardware type
+ps		shows all ports (each slot is 24 ports xe0 - xe23)
+tx N pbm=xe72   sends a 1000 packets out of port 1/4/0
+		ports are numbered 0 - 23, 24 - 47, 48 - 71 and so forth
+port  96,98 lb=none // sets port loopback type none
+config show <string> // shows sal config words matching string
+config delete <string> // deletes config variable
+port 96-99 en=0 // set port range enable DOWN
+port 96 lanes 1 // set number of port breakout lanes
+port 96 lanes 2
+port X probe // tests port
+
+#############################################################################
+#
+blow away the existing database & start fresh
+rm /config/db/*
+
+#############################################################################
+
+turn OFF heartbeat so 'pm' does not kill a daemon:
+no pm process netdevd liveness enable
+// no pm liveness enable
+pm process netdevd restart-action none
+
+#############################################################################
+
+To affect egress buffering, we have to tweak the alpha of
+the *EGRESS* port.  To do this, here are the actions:
+
+first feed the unit & port number to the function below:
+
+uint32 _soc_trident2_mmu_port(unit, port); 
+which eventually gets down to: SOC_TD2_MMU_PIPED_MEM_INDEX
+
+then feed the mmu_port returned into below:
+
+SOC_TD2_PORT_PIPE(unit, mmu_port) returns 0 (pipe X) or 1 (pipe Y)
+
+Then set the value using bcm shell:
+
+mod MMU_THDM_DB_QUEUE_CONFIG_X 0 568 Q_SHARED_ALPHA=2 Q_LIMIT_DYNAMIC=1 Q_LIMIT_ENABLE=1 Q_MIN_LIMIT=0x2D
+
+where X is 0 or 1 based on mmu port.
+
+So (unit, port) -- maps to --> (unit, mmu_port).
+
+The above sets ALL queues to alpha of 2 indiscriminately, we need to
+do it only for the egress port we are affecting.
+
+So, how do we fing the api & q for that 
+
+#############################################################################
+
+Trying to find BCM unit & port numbers example:
+
+static int _ndd_mgmtd_port_admin_set(NDD_CFG_PORT *pMsg)
+{
+    int err = 0;
+    ndd_card_info_t *pCard = NULL;
+    ndd_unit_info_t *pUnit = NULL;
+    ndd_port_info_t *pPort = NULL;
+
+    NDD_DBG(DBG_NDD_FEAT_IBFE_TRAF, MASK_CALL_FLOW, "IBFE_TRAF: Mgmtd setting admin %s on ports %s/%s.",
+            (pMsg->value[0] ? "enable" : "disable"), pMsg->slot_str, pMsg->port_str);
+
+    /* Check parameters */
+    NDD_BAIL_IF_NULL(ndd_chassis_obj);
+    NDD_BAIL_IF_NULL(pMsg->slot_str);
+
+    pCard = ndd_chassis_obj->get_card(pMsg->slot_str);
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    NDD_BAIL_IF_NULL(pCard);
+
+    pCard->get_unit_and_port(pMsg->port_str, &pUnit, &pPort);
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    if (!pUnit) {
+        NDD_DBG(DBG_NDD_FEAT_IBFE_TRAF, MASK_DEBUG_DATA, "Invalid port '%s/%s'",
+                pMsg->slot_str,pMsg->port_str);
+        bail_null_quiet(pUnit);  /* if mgmtD queries parent port, we need to skip those requests */
+    }
+    NDD_BAIL_IF_NULL(pPort);
+
+    pPort->admin_mgmtd = pMsg->value[0];
+
+    /* Dont send admin to bcm if being forced down */
+    if (!pPort->get_admin_force_down()) {
+        pMsg->value[0] = (pPort->admin_mgmtd && pPort->admin_ibfe);
+        err = pCard->port_params_set(pMsg);
+    }
+
+ bail:
+    return err;
+}
+
+#############################################################################
+
+The branch in which Genesis is being developed: sandbox/sb-newgen
+
+HC3 box I can share with Vivek D: 10.120.6.130 6002 (lab entry 4420)
+Lab B04, F5
+
+Anant's box: 10.120.6.130 6005, rack B04, row 14
+
+#############################################################################
+
+Partially building (just an executable rather than the whole .img)
+
+cd into the directory (like netdevd), then issue
+>> sudo -E make install
+
+This build and places the image int the correct ..../opt/tms/bin
+directory of the distribution.  Now copy it over to the box by
+doing:
+
+    [admin@gigamon-260005 ~]# cd /opt/tms/bin/
+    mount -o remount,rw /
+    scp user@x.x.x.x:~/netdevd .
+    reboot
+
+That should run the new binary.
+
+#############################################################################
+
+turning on DHCP client on a linux interface:
+
+	dhclient <interface>
+
+#############################################################################
+#
+getting the addons:
+
+scp gakyol@10.22.0.248:/home/gakyol/ADDONS/tarred .
+ 	
+#############################################################################
+
+creating a vlan tagged interface in linux:
+	/sbin/modprobe 8021q
+	/sbin/vconfig add <interface> <vlan number>
+
+	OR
+
+	ip link add link <interface> name <newname> type vlan id <vlan number>
+	ip link add link eth0 name eth0.99 type vlan id 99
+
+deleting a vlan interface
+
+	ip link delete eth0.99
+
+#############################################################################
+#
+# Cavium enablement:
+#
+# ./fpgai2c 0 <slot> 0x39 7 3 ---> for cavium 1
+# ./fpgai2c 0 <slot> 0x39 7 7 ---> for cavium 2
+#
+# for slot 1:
+# ./fpgai2c 0 1 0x39 7 3
+# ./fpgai2c 0 1 0x39 7 7
+
+# cuts ALL consoles from cpu
+function no_cavium_consoles ()
+{
+    fpgai2c 0 1 0x39 7 0	# deactivate slot 1
+    fpgai2c 0 2 0x39 7 0	# .. slot 2	
+    fpgai2c 0 3 0x39 7 0	# .. slot 3	
+    fpgai2c 0 4 0x39 7 0	# .. slot 4
+}
+
+alias scrn='screen /dev/ttyS1 115200'
+
+#
+# controls cavium console connections to the cpu
+# s - slot, c - cavium number
+# for example, s2c1 will connect slot 2 cavium 1 to
+# the console.
+#
+alias s1c0='no_cavium_consoles; fpgai2c 0 1 0x39 7 3; scrn'
+alias s1c1='no_cavium_consoles; fpgai2c 0 1 0x39 7 7; scrn'
+alias s2c0='no_cavium_consoles; fpgai2c 0 2 0x39 7 3; scrn'
+alias s2c1='no_cavium_consoles; fpgai2c 0 2 0x39 7 7; scrn'
+alias s3c0='no_cavium_consoles; fpgai2c 0 3 0x39 7 3; scrn'
+alias s3c1='no_cavium_consoles; fpgai2c 0 3 0x39 7 7; scrn'
+alias s4c0='no_cavium_consoles; fpgai2c 0 4 0x39 7 3; scrn'
+alias s4c1='no_cavium_consoles; fpgai2c 0 4 0x39 7 7; scrn'
+
+#
+# connect to the selected cavium:
+# FIRST MUST DO ssh 0 then ->  ./screen /dev/ttyS1 115200
+#
+# CREATE VLAN 11:
+# vlan create 11 ubm=xe0,ge0,xe1 pbm=xe0,ge0,xe1
+#
+# vlan create 10 ubm=xe0,ge0 pbm=xe0,ge0
+# pvlan set xe0,ge0 10
+# vlan create 11 ubm=xe1,ge0 pbm=xe1,ge0
+# pvlan set xe1,ge0 11
+#
+#
+#
+#############################################################################
+#
+# 'screen' commands
+#
+#  screen abc	starts the command in 'screen'
+#  to get out type ctrl-a d
+#  to kill type ctl-a k
+#
+#  to rejoin enter screen -r
+#
+#
+#############################################################################
+# changing linux interface names, for example (interface must be down first):
+#
+# ip link set <OLD_NAME> name <NEW_NAME>
+#
+#
+#
+#############################################################################
+#
+# mounting one linux from the other:
+# the two partitions are sda5 (part 0) and sda6 (part 1)
+#
+# mount -t ext3 /dev/sda[5/6] /mnt
+#
+#############################################################################
+#
+# config prompt> configuration jump-start
+#
+# The above forces some sanity into the startup config
+#
+#############################################################################
+# fixing libprotobuf issue:
+#
+# sudo find libprotobuf libprotobuf-c -exec touch {} \;
+#
+#############################################################################
+# 
+#  dump all nodes below ..
+#
+#  internal q i s /net/interface/state
+
+#############################################################################
+# enable netdevd messages, extra debugging
+#
+#############################################################################
+#
+    blow away everything command: reset factory all
+
+
+
+internal action - /gv/internal/actions/netdevd/trace min value uint32 0 max value uint32 27 value value uint32 3
+internal action - /gv/internal/actions/netdevd/trace min value uint32 12 max value uint32 13 value value uint32 0
+internal action - /gv/internal/actions/netdevd/trace min value uint32 8 max value uint32 8 value value uint32 0
+#
+
+#############################################################################
+# while gdb'ing, print all card & port objects down from the top
+
+set print object on
+print *(ndd_unit_info_t *)ndd_chassis_obj->pCardTbl[3]->unitObjPtrTbl[0]
+
+#############################################################################
+ show port details with an internal command:
+
+ show gmon internal hardware portmap port-list 1/4/c8q1
+
+#############################################################################
+
+dump based on: "mdreq -l query iterate subtree /net"
+from cli: "internal q g - /gv/chassis/state/box_id"
+           (internal query get - STRING)
+
+Name: /net/interface/address/state/ifdevname/lo/ipv6addr/::1/preferred_lifetime    Attrib: value Type: duration_sec Value: -1
+Name: /net/interface/address/state/ifdevname/lo/ipv6addr/::1/status    Attrib: value Type: string Value: preferred
+Name: /net/interface/address/state/ifdevname/lo/ipv6addr/::1/valid_lifetime    Attrib: value Type: duration_sec Value: -1
+Name: /net/interface/address/state/ifdevname/eth0    Attrib: value Type: string Value: eth0
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90    Attrib: value Type: string Value: 10.115.182.90
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/address    Attrib: value Type: ipv4addr Value: 10.115.182.90
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/ifdevname    Attrib: value Type: string Value:
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/ifindex    Attrib: value Type: uint32 Value: 3
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/ifname    Attrib: value Type: string Value: eth0
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/mask    Attrib: value Type: ipv4addr Value: 255.255.248.0
+Name: /net/interface/address/state/ifdevname/eth0/ipv4addr/10.115.182.90/mask_len    Attrib: value Type: uint8 Value: 21
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8    Attrib: value Type: string Value: fe80::21d:acff:fe26:8
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/address    Attrib: value Type: ipv6addr Value: fe80::21d:acff:fe26:8
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/ifindex    Attrib: value Type: uint32 Value: 3
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/ifname    Attrib: value Type: string Value: eth0
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/mask_len    Attrib: value Type: uint8 Value: 64
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/preferred_lifetime    Attrib: value Type: duration_sec Value: -1
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/status    Attrib: value Type: string Value: preferred
+Name: /net/interface/address/state/ifdevname/eth0/ipv6addr/fe80::21d:acff:fe26:8/valid_lifetime    Attrib: value Type: duration_sec Value: -1
+Name: /net/interface/address/state/ifdevname/eth1    Attrib: value Type: string Value: eth1
+Name: /net/interface/address/state/ifdevname/eth2    Attrib: value Type: string Value: eth2
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155    Attrib: value Type: string Value: 169.254.83.155
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/address    Attrib: value Type: ipv4addr Value: 169.254.83.155
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/ifdevname    Attrib: value Type: string Value:
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/ifindex    Attrib: value Type: uint32 Value: 7
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/ifname    Attrib: value Type: string Value: eth2
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/mask    Attrib: value Type: ipv4addr Value: 255.255.0.0
+Name: /net/interface/address/state/ifdevname/eth2/ipv4addr/169.254.83.155/mask_len    Attrib: value Type: uint8 Value: 16
+

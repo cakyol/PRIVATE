@@ -1,0 +1,435 @@
+
+Turning on debugging in an openswitch daemon
+--------------------------------------------
+ovs-appctl -t ops-switchd vlog/set ops_mirrors:syslog:info
+ovs-appctl -t ops-switchd vlog/set ops_mirrors:syslog:dbg
+
+SYNC a GIT BRANCH master ---> some_feature_branch
+-------------------------------------------------
+
+git checkout master (from)
+git pull
+git checkout some_feature_branch
+git merge no-commit master
+
+MERGING A BRANCH INTO 'master'
+------------------------------
+
+clone master; cd into it;
+git merge --squash origin/feature/branch_name
+git review
+
+
+RUNNING AN RTL TEST
+-------------------
+
+Important script: /users/viswanav/envSetup.sh
+
+1.  Source this script. Check for eggDir_<Timestamp> 
+    folder created in your $HOME directory.
+
+2.  You will also need to source update_path_<Timestamp>.sh 
+    in whichever shell you want to run the RTL test. 
+    This is generated in your $HOME directory as well.
+
+To run an RTL test,
+$ sudo su /bin/bash
+$ RSVNID=”<Reservation_ID_from_Pod_Manager>”; py.test -s <test_script>.py
+
+
+#
+# connecting to BCM shell on vswitchd
+#
+ip netns exec swns telnet locahost 1943
+
+Mirroring:
+-----------
+
+dl: tftp -r akyolc.onie -g 120.93.49.9
+onie_install: onie-nos-install tftp://120.93.49.9/akyolc.onie
+adjusting vi for 5712 console:
+    vi --cmd 'set nu lines=56 columns=120' FILE
+
+/*
+ * defines a mirror named 'MY_MIRROR' in bridge 'bridge_normal'
+ * where the ingress and egress port is '1' and the mirror to port is '2'
+ */
+ovs-vsctl add-port bridge_normal 1
+ovs-vsctl add-port bridge_normal 2
+ovs-vsctl -- --id=@m create mirror name=MY_MIRROR \
+    -- add bridge bridge_normal mirrors @m \
+    -- --id=@eth1 get port 1 -- --id=@eth2 get port 2 \
+    -- set mirror MY_MIRROR select-src-port=@eth1 select-dst-port=@eth1 \
+    -- set mirror MY_MIRROR output-port=@eth2
+
+remove: 
+    ovs-vsctl -- --id=@m get Mirror MY_MIRROR \
+              -- remove Bridge bridge_normal mirrors @m
+or:
+    ovs-vsctl clear Bridge bridge_normal mirrors
+#
+# ops-dev mailing alias
+#
+ops-dev@lists.openswitch.net
+
+#
+# check gerritt
+#
+ssh -v -p 29418 akyolc@review.openhalon.io
+
+#
+# clone NEW roseville halon repository
+#
+git clone https://git.openhalon.io/openhalon/openhalon <NEW_DIRECTORY>
+cd <NEW_DIRECTORY>
+git clone https://git.hpnos.io/halon/halon yocto/halon 
+
+#
+# to build an as5712 or generic simulator image
+#
+make configure as5712
+make configure genericx86-64
+
+*******************************************************
+
+TO **CREATE** A BRANCH
+----------------------
+make devenv_add sysd
+cd src/sysd
+git review -s # this command setups the gerrit remote
+git checkout -b feature/foo # notice the -b flag to create the new branch
+git push gerrit feature/foo # After this step the new branch is published!
+# do your changes and commit
+git commit -s # This step is needed for branch creation even if you do not have any code changes
+git review feature/foo # send the review for this branch
+
+TO WORK WITH A BRANCH
+----------------------
+make devenv_add sysd
+cd src/sysd
+git pull --rebase # update the local repo to find any new remote branches
+git checkout -b feature/foo --track origin/feature/foo 
+git branch -u origin/feature/foo
+# do your changes and commit
+git review feature/foo # send the review for this branch
+
+TO MAKE A DOCKER IMAGE:
+-----------------------
+- Check for your id in docker group
+prompt> id <username>
+uid=1000(halon) gid=1000(halon) groups=1000(halon),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),110(lpadmin),111(sambashare),999(docker)
+
+- Add if not there: sudo usermod -aG docker <username>
+- Reboot VM.
+- make configure genericx86-64
+LABEL:
+- make
+- first, remove the old tagged image (in case it is old)
+    docker rmi openhalon/genericx86-64
+- make export_docker_image
+- To run the image in docker (add & if you want to run in background)
+    docker run --privileged -v /tmp:/tmp -h h1 --name=h1 -ti --net=none openhalon/genericx86-64 /sbin/init 
+- To access the docker switch from other window
+	docker exec ti h1 /bin/bash
+	You should see the bash prompt.
+- To reload other image, >Docker stop <name> - here name is h1.
+- Docker rm <name> , to remove earlier container
+- Docker rmi <image-name> to remove earlier docker image.
+- Goto LABEL
+
+RUNNING QUAGGA IN DOCKER
+-------------------------
+sudo docker run -t -d --name=quagga --privileged halon/quagga
+sudo docker exec -ti quagga bash
+
+#
+# To checkout actual source code
+#
+make devenv_init
+make devenv_add <name of the repo/module> (e.g: make devenv_add intfd)
+
+After this a new src directory is created and the code is present in 
+the src directory. 
+
+#
+# Austin halon build (OBSOLETE)
+#
+git clone ssh://cakyol@halon-review.austin.hp.com:8000/hc-ovs
+
+#
+# git update with merge
+#
+git stash
+git pull --rebase
+git stash pop
+
+#
+# commit to same old commit
+#
+git commit --amend
+
+#
+# to build image, issue
+#
+make
+make install
+make pkg
+
+This creates an 111Mbyte image named as onie-installer-x86_64-as5712**
+Now we are ready to download image to the device:
+
+scp $home/image/onie-installer-x86_64-as5712_54x-build-321 root@16.108.158.195:/tmp
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+Updating Firmware Image on Accton AS5712
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+When the image builds, it is usually in image/onie-installer-x86_64-as5712_54x.
+Copy that to /warp/pub (tftp) directory first.  
+The pmg switches have access to these directly.
+
+Management ip addr of Vivek's machine in ONIE is: 16.108.159.170
+Once it boots up halon, it is: 16.108.159.173
+
+When you turn on the AS5712, it will boot into the Intel Boot Agent, 
+the BIOS, and then GRUB. In the GRUB menu, you can choose between ONIE 
+and the Accton Diags. You can try out each one, but we will need to be 
+booted into ONIE to run the installer above. 
+
+(Please note that we don’t have a mechanism to do a firmware update 
+from the Halon image right now. So each time you want to update the 
+Halon image, you have to boot back into ONIE and run the updated installer script.) 
+Once ONIE boots up, it goes crazy trying to contact all of its neighbors 
+(hundreds in our lab!). So the first thing you want to do is to stop that. 
+Hit the ENTER key, and then run this command: 
+
+ONIE:/ # /etc/init.d/discover.sh stop
+Stopping: discover... done.
+Note that you might want to cut-‘n-paste this because there will be 
+lots of messages spewing out the console. 
+
+NOTE: You can avoid the discover.sh script from starting by choosing 
+"ONIE" from the first GRUB menu, and "ONIE: Rescue" from the second 
+GRUB menu. Then you only have to press ENTER to get to the ONIE prompt. 
+
+The “firmware update” procedure is show below: 
+ONIE:/ # cd /tmp
+
+U can use tftp to copy the image from the pmg tftp server by entering:
+tftp -r akyolc.onie -g 120.93.49.9
+
+OR
+
+ONIE:/tmp # wget http://<URL>/onie-installer-x86_64-as5712_54x
+Connecting to 15.178.209.226 (15.178.209.226:80)
+onie-installer-x86_6 100% |*******************************| 23996k  0:00:00 ETA
+
+ONIE:/tmp # chmod +x onie-installer-x86_64-as5712_54x 
+ONIE:/tmp # ./onie-installer-x86_64-as5712_54x 
+Halon ONIE installer... 0.2
+==== Removing existing NOS partition (#4)
+Partition number 4 out of range!
+Error 0 deleting partition!
+Error encountered; not saving changes.
+==== Creating a new NOS partition (#4, label halon)
+Warning: The kernel is still using the old partition table.
+The new table will be used at the next reboot.
+The operation has completed successfully.
+==== Formatting NOS partition in ext4
+==== Populating the root filesystem
+107653 blocks
+==== Installing NOS GRUB
+Installation finished. No error reported.
+Halon installation completed
+If you want, you can see the new partition with the Halon image: 
+ONIE:/tmp # blkid
+/dev/sda2: LABEL="ONIE-BOOT" UUID="74e0496d-578b-4147-b9ed-872c2dde4d2f"
+/dev/sda3: LABEL="ACCTON-DIAG" UUID="ccbe7195-6b84-4638-80a0-2f2295b6bda4"
+/dev/sda4: LABEL="halon" UUID="a7372add-a082-462d-89ea-dc55a71e7403"
+
+Please don’t mess with the other partitions, especially /dev/sda1, 
+because I don’t know how to recover the unit after that! 
+You can reboot the unit, and this time choose “halon” from the 
+GRUB menu. Feel free to download your binaries to the root filesystem 
+(on /dev/sda4) and try them out. If you mess up, you can boot 
+back into ONIE, and perform another halon install. 
+
+----------------------------------------------------------------------
+
+just to clone opennsl from Broadcom:
+git clone https://git-nos.rose.rdlabs.hpecorp.net/hpe/opennsl
+
+----------------------------------------------------------------------
+ 
+killall lldpd   /* kills lldpd for good */
+
+/* Windows directory shared between laptops */
+\\pnbfiles.rose.hp.com\warp\pub\PaloAltoPlfmTeam\halon
+
+/* start lldpd with debugging */
+/usr/sbin/lldpd --detach --pidfile -vSYSLOG:DBG --ovsdb-options-end -ll -dd
+
+/* get all interfaces */
+ovs-vsctl list interface
+
+/* get a specific interface */
+ovs-vsctl list interface 14
+ovs-vsctl list interface 18
+
+/* admin on an interface */
+ovs-vsctl set interface 18 user_config:admin=up user_config:autoneg=on
+
+/* turn on lldp on all ports */
+ovs-vsctl list Open_vswitch
+ovs-vsctl set Open_vswitch <uuid> other_config:lldp_enable=true
+
+/* errors */
+tail -f /var/log/messages
+
+/* dump contents of an ovsdb table */
+ovsdb-client monitor TABLENAME
+
+/* turn on debugging on a daemon */
+ovs-appctl -t bgpd vlog/list
+ovs-appctl vlog/set stream_tcp:dbg
+---> ovs-appctl -t <daemon> vlog/set dbg
+
+
+----------------------------------------------------------------------
+
+Setting up NOMachine ssh tunnel:
+
+On the CLIENT, execute:
+    ssh -L 4003:localhost:4000 server_username@server_ip_address
+    Then connect with nomachine server: localhost, port number 4003
+
+On the SERVER, start it simply by:
+    sudo /usr/NX/bin/nxserver --restart
+
+#
+# net space ip command equivalents
+#
+ifconfig --> ip addr or just ip a
+ifconfig <interface> up/down --> ip link set dev <interface> up/down
+ifconfig <interface> <ip> netmask <netmask> --> ip addr add <ip>/<masklen> dev <interface>
+netstat -rn --> ip route or just ip r
+route add -net <net> netmask <netmask> gw <gateway> \
+    --> ip r add <net>/<netmasklen> via <gateway>
+
+--------------------------------------------------------------------
+to generate ovs db documentation,
+first, must have "makdown" package:
+sudo apt-get install markdown
+
+in open*/build, issue make dist-docs
+
+and they are placed into the same named directory.
+--------------------------------------------------------------------
+ovsdb-client examples:
+ovsdb-client transact '[ "OpenHalon",
+    {
+	"op": "insert",
+	"table": "RIB",
+	"row":
+	    {
+		"prefix": "10.10.0.0", 
+		"prefix_len": 24,
+		"from_protocol": "static",
+		"address_family": "ipv4",
+		"sub_address_family": "multicast"
+	    },
+	"uuid-name":"first_rib_entry"
+    }
+]'
+
+--------------------------------------------------------------------
+#
+# run on the simulator for convenience
+#
+alias oc=ovsdb-client
+alias ov=ovs-vsctl
+
+# show RIB table
+default server = unix:/var/run/openvswitch/db.sock
+default database = OpenHalon
+oc list-tables
+oc list-columns RIB
+oc list-columns unix:/var/run/openvswitch/db.sock OpenHalon RIB
+
+--------------------------------------------------------------------
+setting up mininet
+make bake mininet-native
+
+You can run it with:
+build/tmp/sysroots/x86_64-linux/usr/bin/python-native/python build/tmp/sysroots/x86_64-linux/usr/bin/mn
+
+--------------------------------------------------------------------
+
+setting up test infra ?
+
+make devenv_init 
+make devenv_add  intfd
+make devenv_ct_init 
+make devenv_ct_test 
+
+CHECK STATUS OF DAEMON IN SWITCH
+--------------------------------
+systemctl status bgpd
+
+DOCKER COMMANDS
+---------------
+Here are some handy commands which can be used with docker.
+
+•	To start docker of your image,
+$ docker run --privileged -v /tmp:/tmp -v /dev/log:/dev/log -v /sys/fs/cgroup:/sys/fs/cgroup -h h1 --name abcd openhalon/genericx86-64 /sbin/init
+abcd – name of docker container
+openhalon/genericx86-64  – name of docker image
+
+Then, 
+$ docker exec –ti abcd bash
+
+•	To check for docker zombies, 
+$ docker ps –aq
+
+•	To kill and remove all docker containers(cleanup),
+$ docker ps –aq | xargs docker kill
+$ docker ps –aq | xargs docker rm
+
+•	You can also,
+$ docker stop/start/restart abcd
+
+•	To rename an image,
+$ docker tag <IMAGE ID> <NEW_IMAGE_NAME>
+ex: 
+$ docker images
+REPOSITORY                TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+openhalon/genericx86-64   latest              d6cee281ee0b        13 hours ago        288.1 MB
+
+$ docker tag d6cee281ee0b openhalon/bug_fix
+
+$ docker images
+REPOSITORY                TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+openhalon/bug_fix         latest              d6cee281ee0b        13 hours ago        288.1 MB
+openhalon/genericx86-64   latest              d6cee281ee0b        13 hours ago        288.1 MB
+
+
+
+
+
+
+
+
+
+
+
+
+
+

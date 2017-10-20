@@ -1,0 +1,380 @@
+
+##################################################################
+#		       Basic stuff
+##################################################################
+
+#
+# Things to minimally do to make the environment 
+# reasonable.
+#
+# 1) In the window manager, change focus follows 
+#    mouse by using "gnome-tweak-tool"
+#
+# 2) A good NX or x2go window size is 1725x1000
+#
+# 3) Make sure the python function "on_buttonpress", in file
+#    /usr/share/terminator/terminatorlib/terminal.py, interchange
+#    event.button 2 and 3, so that we can get paste on right click
+#
+# 4) If x2go client exits/dies, make sure that the $home/.Xauthority 
+#    file and the $home/.profile files are deleted.  After the
+#    first run, restore the .profile
+#
+# 5) "terminator" config is stored in ~/.config/terminator/config
+#
+##################################################################
+
+export MY_USERNAME=`whoami`
+export MY_USERID=`id -u $MY_USERNAME`
+
+# export TERM=xterm-color
+export TERM=xterm
+export TERM=xterm-color
+export HOST=`uname -n`
+export EDITOR="vi"
+export GIT_EDITOR=$EDITOR
+export GITK_TMPDIR=/tmp
+export WINEDITOR=$EDITOR
+export home=$HOME
+export NEWHOME=$home/.newhome
+export newhome=$NEWHOME
+export IMAGES=$NEWHOME/IMAGES
+export images=$IMAGES
+export MY_GITHUB_USERNAME=cakyol
+export FORTIFY_INSTALL_DIR='/tools/fortify/fortify_4.40'
+
+umask 022
+set -a
+set -o $EDITOR
+
+PATH=/bin:/usr/bin:/tools:/tools/git/production/bin
+PATH=$PATH:/etc:/usr/etc:/usr/openwin/bin:/usr/5bin:/usr/bin/X11
+PATH=$PATH:/usr/ucb:/usr/sbin:/usr/lib:/usr/local
+PATH=$PATH:/usr/local/bin:$PATH:/usr/local/sbin:/sbin
+
+PATH=$PATH:$home:$newhome/BIN:.
+PATH=$PATH:/tools/fortify/fortify_4.40/bin
+export PATH=/opt/Python-2.7.10/bin:$PATH
+
+export LS_COLORS='di=01;37:ln=4'
+export GREP_OPTIONS='--color=auto'
+# alias ls='ls --color'
+alias rm='/bin/rm -i'
+alias h='history'
+alias frm='/bin/rm -i -rf'
+alias csp='cscope -d -q'
+alias clear='echo -e "\033[2J"'
+alias cls='clear'
+alias src='. $home/.bashrc'
+alias addr='ifconfig -a | grep "inet addr"'
+
+function set_prompts
+{
+    #### PS1='\h:$SHORT_BRANCHNAME:$PWD> '
+    #### PS1='\[\033[01;32m\]\u@\h\[\033[01;36m\] \w\[\033[01;00m\]> '
+    PS1='\u@\h:\w> '
+    PS2='-> '
+}
+
+set_prompts
+
+#
+# recursive grep function
+# $1 is the searched string
+#
+function rgrep
+{
+    find . \( -name '*.h' -o -name '*.c' \) -exec fgrep -l $1 {} \;
+}
+
+# get a file using scp.  First paeram is the server address,
+# second param is the file to read
+function getfile ()
+{
+    SERVER=$1
+    FILE=$2
+    scp $MY_USERNAME@$SERVER:$FILE .
+}
+
+##################################################################
+#		       X stuff
+##################################################################
+#
+export FONTDIR="$HOME/FONTS"
+# xset +fp $FONTDIR
+# xhost + >& /dev/null
+# export font="-*-fixed-bold-*-*-*-15-140-*-*-*-*-*-*"
+# export font="-*-fixed-bold-r-*-*-*-120-75-75-c-80-*-*"
+# export font="-*-fixed-bold-r-*-*-*-120-75-75-c-80-*-*"
+# export font="-*-clean-medium-r-*-*-*-140-*-*-*-*-*-*"
+# export font="-misc-fixed-*-*-*-*-15-*-*-*-*-*-*-*"
+# export font="-zevv-peep-medium-r-normal--16-140-75-75-c-80-iso8859-1"
+# export font="-*-fixed-medium-*-*-*-15-140-*-*-*-*-*-*"
+# export font="-*-*-medium-*-*-*-15-120-*-*-*-*-*-*"
+# export font="-*-lucidatypewriter-*-*-*-*-140-*-*-*-*-*-*"
+###### xrdb $HOME/.Xresources > /dev/null 2>&1
+alias gt='gnome-terminal --geometry=90x50'
+alias tt='terminator'
+
+##################################################################
+#		       Clearcase
+##################################################################
+#
+# export CLEARCASE_AVOBS="/vobs/nos"
+# export NOS_BASE=$CLEARCASE_AVOBS
+#
+# set VWNAME to view name, if in a view
+#
+# export VWNAME=":"
+# if [ "$CLEARCASE_ROOT" ]
+# then
+# 	export VWNAME=`:basename $CLEARCASE_ROOT:`
+# fi
+#
+# print out ALL diffs of ALL changed & checked out files
+#
+# function ccdiff
+# {
+# for file in `cleartool lsco -me -cview -avobs -short`
+# do
+# echo; echo; 
+# echo "*********** DIFFS FOR $file ***********"
+# cleartool diff -pred -ser $file
+# done
+# }
+#
+# alias ct='cleartool'
+# alias sv='ct setview'
+# alias myviews='ct lsview | egrep akyol'
+# alias status='ct lsco -me -cview -avobs -short'
+# alias c1diff='ct diff -serial -pred'
+# alias co='cleartool checkout -nc -unr'
+# export BRANCHNAME=""
+
+##################################################################
+##
+##                           Gigamon
+##
+##################################################################
+
+export WORKHORSE=saturn
+
+#
+# for some reason, git push fails with this set
+#
+unset SSH_ASKPASS
+
+#
+# Without this, stupid c++ compiler complains about variable
+# number of vprintf parameters
+#
+# export WARNINGS_EXTRA_OVERRIDE=1
+unset WARNINGS_EXTRA_OVERRIDE
+
+git config --global user.name "Cihangir M Akyol"
+git config --global user.email gene.akyol@gigamon.com
+git config --global user.username $MY_USERNAME
+# git init
+alias xtend='cd /newhome/$MY_USERNAME'
+
+alias rbase='cd $CURRENT_REPO_DIRECTORY'
+alias gigavue='cd $CURRENT_REPO_DIRECTORY/customer/gigavue'
+alias gigasmart='cd $CURRENT_REPO_DIRECTORY/customer/gigasmart'
+alias daemons='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin'
+alias mgmtd='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/mgmtd'
+alias netdevd='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/netdevd'
+alias gdp='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/lib/libgdp'
+alias peripd='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/peripd'
+alias ndiscd='cd $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/ndiscd'
+alias tools='cd $CURRENT_REPO_DIRECTORY/customer/tools'
+alias vendor='cd $CURRENT_REPO_DIRECTORY/customer/vendor'
+alias bcmsdk='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.4.11'
+alias current_bcmsdk='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.3.2'
+alias csdk=current_bcmsdk
+alias sdk648='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.4.8'
+alias sdk649='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.4.9'
+alias sdk6411='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.4.11'
+alias sdk659='cd $CURRENT_REPO_DIRECTORY/customer/vendor/sdk-xgs-robo-6.5.9'
+alias samara='cd $CURRENT_REPO_DIRECTORY/fir/tree/src'
+alias gpy='./gigafalcon.py '
+alias images='cd $CURRENT_REPO_DIRECTORY/fir/tree/output'
+alias falcon_images='cd $CURRENT_REPO_DIRECTORY/fir/tree/falcon_output'
+
+# actually build it
+# alias bhc3='source ./setup -p GIHC3 -g off; ./build.sh -t clean; ./build.sh -t all'
+# function bhc3 ()
+# {
+    # rm -f ./build_log
+    # touch ./build_log
+    # source ./setup -p GIHC3 -g on
+    # ./build.sh -t clean
+    # ./build.sh -t all 2>&1 | tee ./build_log
+# }
+alias bhc3="gigafalcon.py -p GIHC3 --verbose-build -g off -w off 2>&1 | tee ./build_log.hc3"
+alias bhc2="gigafalcon.py -p GVHC2 --verbose-build -g off -w off 2>&1 | tee ./build_log.hc2"
+alias bhc1="gigafalcon.py -p GIHC1 --verbose-build -g off -w off 2>&1 | tee ./build_log.hc1"
+alias bhd="gigafalcon.py -p GVHD --verbose-build -g off -w off 2>&1 | tee ./build_log.hd"
+
+#
+# generic BuildImage
+#
+function bi ()
+{
+    PLAT=$1
+    echo "building image for platform $PLAT"
+    gigafalcon.py -p $PLAT --verbose-build -g off -w off 2>&1 | \
+	tee ./build_log.$PLAT
+}
+
+# fetch from saturn
+alias fetchs='echo "image fetch scp://gakyol@10.22.0.248/tftpboot/gakyol/"'
+
+# fetch from dornier
+alias fetchd='echo "image fetch scp://gakyol@10.22.0.84/tftpboot/gakyol/"'
+
+# get addons
+alias addons='echo "scp gakyol@10.22.0.248:/home/gakyol/ADDONS/tarred ."'
+
+# resize console window so that target vi works properly
+alias ssize='echo "stty cols 197 rows 35"'
+alias tsize=ssize
+
+unset DIR1 DIR2 DIR3 DIR4 DIR5 DIR6 DIR7 DIR8 DIR9
+
+
+alias bashrc='vi $home/.bashrc'
+alias tips='vi $newhome/TIPS/gigamon_tips'
+
+if [ ! -n "$CURRENT_REPO_DIRECTORY" ]
+then
+    export CURRENT_REPO_DIRECTORY='CURRENT_REPO_NOT_SET'
+fi
+
+alias newhome='cd $newhome'
+alias nh=newhome
+alias im='cd $images'
+export REPOSITORIES_BASE_DIRECTORY=~/.repos
+alias repos='cd $REPOSITORIES_BASE_DIRECTORY; ls -l'
+
+function repo
+{
+    unset DIR1 DIR2 DIR3 DIR4 DIR5 DIR6 DIR7 DIR8 DIR9
+    if [ -z "$1" ]
+    then
+        echo "current git repository is set to: $CURRENT_REPO_DIRECTORY"
+    else
+        export CURRENT_REPO_DIRECTORY=$REPOSITORIES_BASE_DIRECTORY/$1
+        export RBASE=$CURRENT_REPO_DIRECTORY
+        echo "working repository set to $CURRENT_REPO_DIRECTORY"
+	export DIR1=$CURRENT_REPO_DIRECTORY/fir/tree/src/include
+	# export DIR2=$CURRENT_REPO_DIRECTORY/fir/tree/src/bin
+	# export DIR3=$CURRENT_REPO_DIRECTORY/fir/tree/src/lib
+	export DIR4=$CURRENT_REPO_DIRECTORY/customer/gigavue/src
+        cd $CURRENT_REPO_DIRECTORY
+    fi
+}
+
+alias uncommit='git reset HEAD~'
+alias push='echo "git push origin HEAD:refs/for/"'
+alias master_push='git push origin HEAD:refs/for/master'
+
+alias fix_proto='sudo find $CURRENT_REPO_DIRECTORY/customer/vendor/libprotobuf $CURRENT_REPO_DIRECTORY/customer/vendor/libprotobuf-c -exec touch {} \;'
+
+alias hc3='telnet 10.120.6.130 6002'
+alias hc2='telnet 10.120.6.200 6025'
+alias hc1='telnet 10.120.6.130 6007'
+alias anant='telnet 10.120.6.130 6005'
+alias hong_hc2='telnet 10.120.6.136 6008'
+
+alias ndd_debug='echo "internal action - /gv/internal/actions/netdevd/trace min value uint32 0 max value uint32 27 value value uint32 7"'
+
+#
+# usage: gv_clone <directory to clone into>
+#
+function gv_clone ()
+{
+    # GIT_BRANCH=$1
+    TARGET_DIRECTORY=$1
+    echo "cloning into $TARGET_DIRECTORY"
+
+    # git clone ssh://gakyol@gerrit.gigamon.com:29418/gvhd && \
+    #	scp -p -P 29418 gakyol@gerrit.gigamon.com:hooks/commit-msg gvhd/.git/hooks/
+
+    git clone \
+        --reference /homevols/vol_05/git-reference-repos/gvhd2.git \
+	ssh://gakyol@gerrit.gigamon.com:29418/gvhd2 $TARGET_DIRECTORY && \
+	scp -p -P 29418 gakyol@gerrit.gigamon.com:hooks/commit-msg \
+	$TARGET_DIRECTORY/.git/hooks/
+
+        # --branch $GITBRANCH --single-branch && \
+}
+
+function gv_bcsp
+{
+    rbase
+    rm -rf cscope*
+    echo -n "Finding files .. "
+    find -L $DIR1 $DIR2 $DIR3 $DIR4 $DIR5 $DIR6 $DIR7 $DIR8 $DIR9 \
+        \( -name '*.h' -o -name '*.c' -o \
+           -name '*.cc' -o -name '*.hh' -o \
+           -name '*akefile*' \) -print > cscope.files
+    echo Done
+    echo -n "Building cscope database .. "
+    cscope -b -q -k
+    echo Done
+    echo -n "Building ctags database .. "
+    ctags `cat cscope.files`
+    echo "Done"
+}
+
+function nbcsp
+{
+    rm -rf cscope*
+    ###netdevd
+    echo -n "Finding files .. "
+    ###find -L $1 $2 $3 $4 \
+    find -L $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/netdevd \
+            $CURRENT_REPO_DIRECTORY/customer/gigavue/src/bin/netdevd_632 \
+        \( -name '*.h' -o -name '*.c' -o \
+           -name '*.cc' -o -name '*.hh' -o \
+           -name '*akefile*' \) -print > cscope.files
+    echo Done
+    echo -n "Building cscope database .. "
+    cscope -b -q -k
+    echo Done
+    echo -n "Building ctags database .. "
+    ctags `cat cscope.files`
+    echo "Done"
+}
+
+function bcsp
+{
+    rm -rf cscope*
+    echo -n "Finding files .. "
+    find -L . \
+        \( -name '*.h' -o -name '*.c' -o \
+           -name '*.cc' -o -name '*.hh' -o \
+           -name '*akefile*' \) -print > cscope.files
+    echo Done
+    echo -n "Building cscope database .. "
+    cscope -b -q -k
+    echo Done
+    echo -n "Building ctags database .. "
+    ctags `cat cscope.files`
+    echo "Done"
+}
+
+#################################
+#################################
+# start in the new home directory
+#
+cd $NEWHOME
+#
+#################################
+#################################
+
+
+
+
+
+

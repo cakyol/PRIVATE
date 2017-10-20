@@ -1,0 +1,49 @@
+
+IPXE> dhcp net1
+IPXE> config
+IPXE> boot http://10.50.31.1/vim/gen-pxe/el5/boot.cfg 
+
+gateway........ 10.115.176.1
+ip............. 10.115.182.201
+netmask........ 255.255.248.0
+
+
+# ifconfig eth1 10.115.182.201 netmask 255.255.248.0
+# route add default gw 10.115.176.1
+# wget http://10.50.31.1/vim/i2ctest_hc3 && chmod +x i2ctest_hc3
+
+   OR
+
+# tftp -r vim/i2ctest_hc3 -g 10.50.31.1 && chmod +x i2ctest_hc3
+
+To update the eeproms without going through the manufacturing procedure:-
+
+# cli> _shell
+# cd /tmp
+# tftp -m binary 10.50.31.1 -c get vim/i2ctest_hc3 && chmod +x ./i2ctest_hc3
+
+./i2ctest_hc3 mf eepw bp GVS-HC300/MP 132-00DM 1DM0-0008 1.0
+./i2ctest_hc3 mf eepw xx GVS-HC300 132-00DK J5678 1.0
+./i2ctest_hc3 mf eepw cc CTL-HC3-001 132-00DR 1DR0-0008 1.0
+./i2ctest_hc3 mf eepw extbd EXT-HC3-001 132-00DP 1DP0-0008 1.0
+
+./i2ctest_hc3 mf eepw fan1 FAN-HC3-001 132-00DT 1DT0-0008 1.0
+./i2ctest_hc3 mf eepw fan2 FAN-HC3-001 132-00DT 1DT0-0008 1.0
+./i2ctest_hc3 mf eepw fan3 FAN-HC3-001 132-00DT 1DT0-0008 1.0
+./i2ctest_hc3 mf eepw fan4 FAN-HC3-001 132-00DT 1DT0-0008 1.0
+./i2ctest_hc3 mf eepw fan5 FAN-HC3-001 132-00DT 1DT0-0008 1.0
+
+./i2ctest_hc3 mf eepw psu1 PSM-HC3-001 132-00DU 1DU0-0008 1.0 
+./i2ctest_hc3 mf eepw psu2 PSM-HC3-001 132-00DU 1DU0-0008 1.0 
+./i2ctest_hc3 mf eepw psu3 PSM-HC3-001 132-00DU 1DU0-0008 1.0 
+./i2ctest_hc3 mf eepw psu4 PSM-HC3-001 132-00DU 1DU0-0008 1.0
+
+./i2ctest_hc3 mf eepw slot2 SMT-HC3-C05 132-00DX 1DX0-0008 1.0
+
+when device 4420 boots up, typically it gets:
+ifconfig eth0 10.115.182.201 netmask 255.255.248.0 up
+route add default gw 10.115.176.1
+
+dornier:
+10.22.0.84
+

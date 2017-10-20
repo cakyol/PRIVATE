@@ -1,0 +1,49 @@
+
+! General
+!*foreground:	#00ff00
+!*background:	#000000
+
+!
+! mwm window manager
+!
+! #define MWM_POINTER
+Mwm*keyboardFocusPolicy:		pointer
+Mwm*buttonBindings:			PointerButtonBindings
+Mwm*wMenuButtonClick:			True
+Mwm*wMenuButtonClick2:			False
+Mwm*resizeBorderWidth:                  6
+Mwm*focusAutoRaise:			False
+Mwm*interactivePlacement:               False
+Mwm*saveUnder:				True
+Mwm*useClientIcon:                      True
+Mwm*lowerOnIconify:			F
+Mwm*clientDecoration:                   all
+Mwm*defaults*foreground:		Black
+Mwm*defaults*background:		White
+Mwm*foreground:				Black
+Mwm*background:				White
+Mwm*activeBackground:			Green
+Mwm*iconBoxTitle:               	icons
+
+!
+! applications
+!
+
+! xterm*font:		-*-fixed-bold-*-*-*-15-140-*-*-*-*-*-*
+! xterm*font:		-*-fixed-medium-*-*-*-15-140-*-*-*-*-*-*
+! xterm*font:		-*-fixed-bold-r-*-*-*-120-75-75-c-80-*-*
+! xterm*font:		-misc-fixed-*-*-*-*-15-*-*-*-*-*-*-*
+! xterm*font:		-zevv-peep-medium-r-normal--16-140-75-75-c-80-iso8859-1
+! xterm*font:		-*-lucidatypewriter-*-*-*-*-*-100-*-*-*-*-*-*
+! xterm*font:		monaco
+xterm*BorderWidth:      10 
+xterm*MultiScroll:      on
+xterm*ScrollBar:        True
+xterm*saveLines:        50000
+xterm*foreground:       green
+xterm*background:       black
+xterm*ptyInitialErase:	True
+xterm*colorMode:	True
+xterm*backarrowKeyIsErase: True
+xterm*selectToClipboard: True
+
